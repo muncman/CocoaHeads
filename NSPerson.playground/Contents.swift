@@ -9,8 +9,7 @@ private func performFirstExample() {
     grace.givenName = "Grace"
     grace.middleName = "Murray"
     grace.familyName = "Hopper"
-    grace.nameSuffix = "PhD."
-    // Note: no nickname here
+    // Note: no nickname nor suffix here
 
     log(grace)
 }
@@ -28,8 +27,10 @@ private func performSecondExample() {
     log(bill)
 
     // Note: multiple values within components
-    let william = "Mr. William James \"Frickin\" Murray-Jones de la Rocha Jr."
+    // Note: parenthetical values are excluded
+    // Note compare the omission of emoji here vs in the non-ASCII scriprt example below
     let nameFormatter = PersonNameComponentsFormatter()
+    let william = "Mr. William James (Frickin) 🍸 Murray-Jones de la Rocha Jr. 🕶"
     if let nameComps  = nameFormatter.personNameComponents(from: william) {
         // Note: no automatic "Bill" for short/nickname
         log(nameComps)
@@ -39,10 +40,41 @@ private func performSecondExample() {
         // Note: the shifting relative to the above example! (Bug?)
         log(nameComps)
     }
+    let will = "Murray, Bill"
+    if let nameComps  = nameFormatter.personNameComponents(from: will) {
+        // Note that the 'last, first' format is handled properly.
+        log(nameComps)
+    }
 }
 
-/// An example built from components using CJK/logographic characters.
+/// An example with a really short name.
 private func performThirdExample() {
+    let stingString = "Sting"
+    var sting = PersonNameComponents()
+    sting.givenName = stingString
+
+    log(sting)
+
+    if let nameComps  = PersonNameComponentsFormatter().personNameComponents(from: stingString) {
+        log(nameComps)
+    }
+}
+
+/// An example showing other formatting methods.
+private func performFourthExample() {
+    var dave = PersonNameComponents()
+    dave.givenName = "Dave"
+    dave.familyName = "Grohl"
+
+    let nameFormatter = PersonNameComponentsFormatter()
+    print("❇️\tPlain & unlocalized = '\(nameFormatter.string(from: dave))'")
+
+    // Note: the keys here are NS-prefixed.
+    print("❇️\tAttributed & annotated = \n\(nameFormatter.annotatedString(from: dave))")
+}
+
+/// An example built from components using CJK script / logographic characters.
+private func performFifthExample() {
     var chiangKaiShek = PersonNameComponents()
     chiangKaiShek.familyName = "蔣"
     chiangKaiShek.givenName = "介石"
@@ -53,7 +85,7 @@ private func performThirdExample() {
 
     // Note: the use of phonetics
     // Note: no spaces between name components in the output, as is appropriate for this name
-    // Note: instead of a single space at the end of the component description, there are two
+    // Note: instead of a single space at the end of the second (only) component description, there are two
     log(chiangKaiShek)
     print("❇️\tFormatting components with phonetics:")
     logPhonetics(chiangKaiShek)
@@ -62,26 +94,19 @@ private func performThirdExample() {
     print("❇️\tFormatting the phonetic component version after making the relationship bidirectional:")
     chiangPhonetic.phoneticRepresentation = chiangKaiShek
     logPhonetics(chiangPhonetic)
-}
 
-/// An example showing other formatting methods.
-private func performFourthExample() {
-    var dave = PersonNameComponents()
-    dave.givenName = "Dave"
-    dave.familyName = "Grohl"
-
-    // TODO: MUNC: formatter options?
-    let nameFormatter = PersonNameComponentsFormatter()
-    print("❇️\tPlain & unlocalized = '\(nameFormatter.string(from: dave))'")
-    let attributed = nameFormatter.annotatedString(from: dave)
-    // Note: the keys here are NS-prefixed.
-    print("❇️\tAttributed & annotated = \n\(attributed)")
-    // TODO: MUNC: get the keys, etc. print("❇️\tExtracted from attributed = \n\(attributed[NSPersonNameComponentGivenName])")
+    var chiangKaiShek😎 = PersonNameComponents()
+    chiangKaiShek😎.familyName = "蔣"
+    chiangKaiShek😎.givenName = "介(你好)石😅"
+    chiangKaiShek.phoneticRepresentation = chiangPhonetic
+    // Note: that emoji and parenthesis are both kept here， as opposed to above
+    // Note: sometimes, the formatted spacing is different when the emoji is in the middle of the name
+    log(chiangKaiShek😎)
 }
 
 /// An example to highlight some differences between the NS- and non-NS APIs.
-private func performFifthExample() {
-    // Note: this can be a `let` while `PersonNameComponents` must be a `var` for this.
+private func performSixthExample() {
+    // Note: this can be a `let` while `PersonNameComponents` must be a `var`.
     let ada = NSPersonNameComponents()
     ada.givenName = "Augusta"
     ada.middleName = "Ada"
@@ -92,15 +117,37 @@ private func performFifthExample() {
     logNSIsDifferent(ada)
 }
 
+/// An example of equality checking.
+private func performSeventhExample() {
+    var nirvanaDave = PersonNameComponents()
+    nirvanaDave.givenName = "Dave"
+    nirvanaDave.familyName = "Grohl"
+
+    var fooDave = PersonNameComponents()
+    fooDave.givenName = "Dave"
+    fooDave.familyName = "Grohl"
+
+    print("❇️\tAre the Daves equal? \(nirvanaDave == fooDave)")
+
+    var probotDave = PersonNameComponents()
+    probotDave.givenName = "Dave"
+    probotDave.middleName = "Eric" // <-- different!
+    probotDave.familyName = "Grohl"
+
+    print("❇️\tAre these Daves equal? \(nirvanaDave == probotDave)")
+}
+
 // MARK: - Helper Methods
 
+// Note:
+//   - notice the space at the end of the components' string description
+//   - `phonetic` is the only key available for `options`.
 private func log(_ components: PersonNameComponents) {
-    // Note: notice the space at the end of the components' string description
     print("❇️\tComponents =\t'\(components)':")
     print("\tDefault =\t\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .default, options: []))'")
-    print("\tLong =\t\t\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .long, options: []))'")
+    print("\tLong =\t\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .long, options: []))'")
     print("\tMedium =\t\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .medium, options: []))'")
-    print("\tShort =\t\t\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .short, options: []))'")
+    print("\tShort =\t\t '\(PersonNameComponentsFormatter.localizedString(from: components, style: .short, options: []))'")
     print("\tAbbreviated =\t'\(PersonNameComponentsFormatter.localizedString(from: components, style: .abbreviated, options: []))'")
     if let phoneticRep = components.phoneticRepresentation {
         print("\tPhonetic representation = '\(phoneticRep)'")
@@ -125,9 +172,9 @@ private func logNSIsDifferent(_ components: NSPersonNameComponents) {
     print("❇️\tComponents =\t'\(components)':")
     let comps = components as PersonNameComponents
     print("\tDefault =\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .default, options: []))'")
-    print("\tLong =\t\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .long, options: []))'")
+    print("\tLong =\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .long, options: []))'")
     print("\tMedium =\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .medium, options: []))'")
-    print("\tShort =\t\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .short, options: []))'")
+    print("\tShort =\t\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .short, options: []))'")
     print("\tAbbreviated =\t'\(PersonNameComponentsFormatter.localizedString(from: comps, style: .abbreviated, options: []))'")
     if let phoneticRep = components.phoneticRepresentation {
         print("\tPhonetic representation = '\(phoneticRep)'")
@@ -141,7 +188,5 @@ performSecondExample()
 performThirdExample()
 performFourthExample()
 performFifthExample()
-
-// TODO: MUNC: try Codeye for images?
-// TODO: MUNC: MUST look at docs and scripts and clauses and limitations and caveats and SYNONYMS... !
-// TODO: MUNC: equality checks...??
+performSixthExample()
+performSeventhExample()
